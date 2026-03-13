@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  ltx2-lipsync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ltx2-lipsync:local
+    container_name: ltx2-lipsync
+
+    # ── GPU passthrough (both methods for maximum compatibility) ──────────────
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    ports:
+      - "8188:8188"   # ComfyUI
+      - "8189:8189"   # FileBrowser
+      - "8888:8888"   # JupyterLab
+
+    volumes:
+      - comfy_models:/workspace/comfyui/models
+      - comfy_outputs:/workspace/outputs
+      - comfy_inputs:/workspace/inputs
+      - comfy_notebooks:/workspace/notebooks
+
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video,graphics
+      # Uncomment and add your token if any HF models require login:
+      # - HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx
+
+    restart: unless-stopped
+    shm_size: "8gb"
+
+volumes:
+  comfy_models:
+  comfy_outputs:
+  comfy_inputs:
+  comfy_notebooks:

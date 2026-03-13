@@ -1,0 +1,26 @@
+# ============================================================
+#  Dockerfile.runpod
+#  Extends the base image with RunPod-specific tweaks:
+#   - Nginx reverse proxy so ComfyUI and FileBrowser are
+#     reachable through RunPod's single-port proxy
+#   - JupyterLab (optional, useful for RunPod's "Jupyter" link)
+# ============================================================
+
+FROM ltx2-lipsync:local
+
+# ── RunPod extras ─────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y nginx && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install jupyterlab 2>/dev/null || true
+
+# ── Nginx config: route /comfyui/ → 8188, /files/ → 8189 ────────────────────
+COPY runpod/nginx.conf /etc/nginx/nginx.conf
+
+# ── RunPod startup overrides start.sh ────────────────────────────────────────
+COPY runpod/start_runpod.sh /workspace/start_runpod.sh
+RUN chmod +x /workspace/start_runpod.sh
+
+EXPOSE 3000 8888
+
+CMD ["/workspace/start_runpod.sh"]
